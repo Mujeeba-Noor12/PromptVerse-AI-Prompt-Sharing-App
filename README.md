@@ -226,9 +226,7 @@ CLIENT_URL=https://your-frontend-domain.com
 4. Push to the branch: `git push origin feature-name`
 5. Submit a pull request
 
-## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -238,10 +236,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - MongoDB for the flexible database
 - Express.js for the robust backend framework
 
-## 📞 Support
 
-If you have any questions or need help with the project, please open an issue on GitHub or contact the development team.
 
----
+
 
 **PromptVerse** - Share, discover, and use amazing AI prompts! 🚀 
