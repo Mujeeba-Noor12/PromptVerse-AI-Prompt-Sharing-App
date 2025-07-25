@@ -1,0 +1,11 @@
+
+{
+  "name": "WorkBill App",
+  "short_name": "WorkBill",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "description": "Freelancer Time & Billing App",
+  "icons": []
+}

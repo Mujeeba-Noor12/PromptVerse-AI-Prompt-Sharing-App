@@ -1,0 +1,471 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f8fafc;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  color: #1e293b;
+}
+
+/* Dark theme */
+body.dark {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+body.dark .card {
+  @apply bg-gray-800/90 border-gray-700/50;
+}
+
+body.dark .input-field {
+  @apply bg-gray-800/90 border-gray-600 text-gray-100 placeholder-gray-400;
+}
+
+body.dark .btn-secondary {
+  @apply bg-gray-700/90 hover:bg-gray-600/90 text-gray-200;
+}
+
+code {
+  font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+}
+
+body.dark ::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.8);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.9);
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.8);
+}
+
+body.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+body.dark .shimmer {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200px 100%;
+}
+
+/* Custom components */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+body.dark .btn-secondary {
+  @apply bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-600;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:shadow-md;
+}
+
+body.dark .card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white;
+}
+
+body.dark .input-field {
+  @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400;
+}
+
+.tag {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 transition-all duration-200;
+}
+
+body.dark .tag {
+  @apply bg-blue-900/50 text-blue-300;
+}
+
+/* Clean Modern Auth Pages */
+.auth-container {
+  @apply min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+body.dark .auth-container {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.auth-card {
+  @apply bg-white rounded-2xl shadow-lg p-8 w-full max-w-md;
+  border: 1px solid #e2e8f0;
+}
+
+body.dark .auth-card {
+  @apply bg-gray-900 border-gray-700;
+}
+
+.auth-title {
+  @apply text-3xl font-bold text-gray-900 dark:text-white text-center mb-8;
+}
+
+/* Clean tabs */
+.auth-tabs {
+  @apply flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-8;
+}
+
+.auth-tab {
+  @apply flex-1 py-2.5 px-4 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer;
+}
+
+.auth-tab.active {
+  @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm;
+}
+
+.auth-tab:not(.active) {
+  @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white;
+}
+
+/* Clean input styling */
+.auth-input-group {
+  @apply space-y-5;
+}
+
+.auth-input-wrapper {
+  @apply relative;
+}
+
+.auth-input {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white;
+}
+
+body.dark .auth-input {
+  @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400;
+}
+
+.auth-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2;
+}
+
+.auth-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+/* Clean buttons */
+.auth-btn-primary {
+  @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.auth-btn-secondary {
+  @apply w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
+.auth-link {
+  @apply text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium;
+}
+
+/* Loading animation */
+.auth-loading {
+  @apply inline-flex items-center;
+}
+
+.auth-spinner {
+  @apply animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2;
+}
+
+/* Error styling */
+.auth-error {
+  @apply mt-1 text-sm text-red-600 dark:text-red-400;
+}
+
+/* Success styling */
+.auth-success {
+  @apply mt-1 text-sm text-green-600 dark:text-green-400;
+}
+
+/* Professional styling */
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section {
+  @apply py-12;
+}
+
+.section-title {
+  @apply text-3xl font-bold text-gray-900 dark:text-white mb-8;
+}
+
+.section-subtitle {
+  @apply text-lg text-gray-600 dark:text-gray-400 mb-12;
+}
+
+/* Professional cards */
+.pro-card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-200 hover:shadow-md;
+}
+
+body.dark .pro-card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+/* Professional buttons */
+.pro-btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.pro-btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+body.dark .pro-btn-secondary {
+  @apply bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-600;
+}
+
+/* Professional inputs */
+.pro-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white;
+}
+
+body.dark .pro-input {
+  @apply bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400;
+}
+
+/* Professional navigation */
+.pro-nav {
+  @apply bg-white shadow-sm border-b border-gray-200;
+}
+
+body.dark .pro-nav {
+  @apply bg-gray-800 border-gray-700;
+}
+
+/* Professional text */
+.pro-text-primary {
+  @apply text-gray-900 dark:text-white;
+}
+
+.pro-text-secondary {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.pro-text-muted {
+  @apply text-gray-500 dark:text-gray-500;
+} 
+
+/* Split-screen Auth Layout */
+.auth-split {
+  @apply min-h-screen flex flex-col md:flex-row;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+body.dark .auth-split {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+.auth-illustration {
+  @apply flex-1 flex flex-col justify-center items-center px-8 py-12 bg-blue-50 dark:bg-gray-900;
+}
+.auth-illustration img {
+  @apply max-w-xs w-full mb-8;
+}
+.auth-illustration .brand-title {
+  @apply text-3xl font-bold text-blue-700 dark:text-blue-300 mb-2 text-center;
+}
+.auth-illustration .brand-tagline {
+  @apply text-lg text-blue-500 dark:text-blue-200 text-center;
+}
+.auth-form-side {
+  @apply flex-1 flex items-center justify-center px-4 py-12;
+}
+@media (max-width: 767px) {
+  .auth-split {
+    @apply flex-col;
+  }
+  .auth-illustration {
+    @apply py-8 px-4;
+  }
+  .auth-form-side {
+    @apply py-8 px-2;
+  }
+} 
+
+/* Clean Centered Auth Layout */
+.auth-centered {
+  @apply min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4;
+}
+.auth-card {
+  @apply bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md border border-gray-200 dark:border-gray-800;
+}
+.auth-title {
+  @apply text-2xl font-bold text-gray-900 dark:text-white text-center mb-6;
+}
+.auth-tabs {
+  @apply flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-6;
+}
+.auth-tab {
+  @apply flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer;
+}
+.auth-tab.active {
+  @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm;
+}
+.auth-tab:not(.active) {
+  @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white;
+}
+.auth-social {
+  @apply flex flex-col gap-3 mb-6;
+}
+.auth-social-btn {
+  @apply flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg font-medium text-base transition-all duration-200 shadow-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+.auth-social-btn.google {
+  @apply bg-white text-gray-700 hover:bg-gray-50 border border-gray-300;
+}
+.auth-social-btn.github {
+  @apply bg-gray-900 text-white hover:bg-gray-800 border border-gray-900;
+}
+.auth-divider {
+  @apply flex items-center my-6;
+}
+.auth-divider-line {
+  @apply flex-1 h-px bg-gray-200 dark:bg-gray-700;
+}
+.auth-divider-text {
+  @apply px-3 text-gray-400 text-sm font-medium;
+}
+.auth-input-group {
+  @apply space-y-5;
+}
+.auth-input-wrapper {
+  @apply relative;
+}
+.auth-input {
+  @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
+}
+.auth-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2;
+}
+.auth-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+.auth-btn-primary {
+  @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+.auth-btn-secondary {
+  @apply w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+.auth-link {
+  @apply text-blue-600 dark:text-blue-400 hover:text-blue-700 font-medium;
+}
+.auth-loading {
+  @apply inline-flex items-center;
+}
+.auth-spinner {
+  @apply animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2;
+}
+.auth-error {
+  @apply mt-1 text-sm text-red-600 dark:text-red-400;
+}
+.auth-success {
+  @apply mt-1 text-sm text-green-600 dark:text-green-400;
+} 
