@@ -1,19 +1,21 @@
+
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Generate JWT token
+
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-// Email transporter
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -22,7 +24,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Send email function
+
 const sendEmail = async (to, subject, html) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -34,9 +36,16 @@ const sendEmail = async (to, subject, html) => {
   await transporter.sendMail(mailOptions);
 };
 
-// @route   POST /api/auth/register
-// @desc    Register a new user
-// @access  Public
+
+const formatUser = (user) => ({
+  id: user._id,
+  username: user.username,
+  email: user.email,
+  bio: user.bio || '',
+  avatar: user.avatar || '',
+});
+
+
 router.post('/register', [
   body('username')
     .isLength({ min: 3, max: 30 })
@@ -58,7 +67,6 @@ router.post('/register', [
 
     const { username, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { username }]
     });
@@ -71,7 +79,6 @@ router.post('/register', [
       });
     }
 
-    // Create new user
     const user = new User({
       username,
       email,
@@ -80,13 +87,13 @@ router.post('/register', [
 
     await user.save();
 
-    // Generate token
+   
     const token = generateToken(user._id);
 
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: user.getPublicProfile()
+      user: formatUser(user)
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -94,9 +101,7 @@ router.post('/register', [
   }
 });
 
-// @route   POST /api/auth/login
-// @desc    Login user
-// @access  Public
+
 router.post('/login', [
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').notEmpty().withMessage('Password is required')
@@ -104,30 +109,27 @@ router.post('/login', [
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ message: errors.array()[0].msg });
     }
 
     const { email, password } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'User not found. Please register first.' });
     }
 
-    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'Invalid password' });
     }
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.json({
       message: 'Login successful',
       token,
-      user: user.getPublicProfile()
+      user: formatUser(user)
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -135,21 +137,18 @@ router.post('/login', [
   }
 });
 
-// @route   GET /api/auth/me
-// @desc    Get current user
-// @access  Private
+
+
 router.get('/me', auth, async (req, res) => {
   try {
-    res.json({ user: req.user });
+    res.json({ user: formatUser(req.user) });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   PUT /api/auth/profile
-// @desc    Update user profile
-// @access  Private
+
 router.put('/profile', auth, [
   body('username')
     .optional()
@@ -191,7 +190,7 @@ router.put('/profile', auth, [
 
     res.json({
       message: 'Profile updated successfully',
-      user: updatedUser
+      user: formatUser(updatedUser)
     });
   } catch (error) {
     console.error('Update profile error:', error);
@@ -199,9 +198,7 @@ router.put('/profile', auth, [
   }
 });
 
-// @route   POST /api/auth/forgot-password
-// @desc    Send password reset email
-// @access  Public
+
 router.post('/forgot-password', [
   body('email').isEmail().withMessage('Please provide a valid email')
 ], async (req, res) => {
@@ -213,53 +210,40 @@ router.post('/forgot-password', [
 
     const { email } = req.body;
 
-    // Find user by email
+  
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Generate reset token
+
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = Date.now() + 3600000; // 1 hour
 
-    // Save reset token to user
+  
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
 
-    // Create reset URL
+   
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
-    // Email content
+  
     const html = `
       <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
           <h1 style="margin: 0; font-size: 24px;">Password Reset Request</h1>
         </div>
         <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-          <p style="color: #333; font-size: 16px; line-height: 1.6;">
-            Hello ${user.username},
-          </p>
-          <p style="color: #333; font-size: 16px; line-height: 1.6;">
-            You requested a password reset for your PromptVerse account. Click the button below to reset your password:
-          </p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
-              Reset Password
-            </a>
-          </div>
-          <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            If you didn't request this password reset, please ignore this email. This link will expire in 1 hour.
-          </p>
-          <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            If the button doesn't work, copy and paste this link into your browser: ${resetUrl}
-          </p>
+          <p>Hello ${user.username},</p>
+          <p>You requested a password reset. Click below to reset your password:</p>
+          <a href="${resetUrl}" style="background:#667eea;color:white;padding:12px 30px;text-decoration:none;border-radius:25px;display:inline-block;">Reset Password</a>
+          <p>If you didn't request this, please ignore this email. This link expires in 1 hour.</p>
         </div>
       </div>
     `;
 
-    // Send email
+   
     await sendEmail(email, 'Password Reset Request - PromptVerse', html);
 
     res.json({ message: 'Password reset email sent' });
@@ -269,9 +253,7 @@ router.post('/forgot-password', [
   }
 });
 
-// @route   POST /api/auth/reset-password
-// @desc    Reset password with token
-// @access  Public
+
 router.post('/reset-password', [
   body('token').notEmpty().withMessage('Reset token is required'),
   body('password')
@@ -297,11 +279,16 @@ router.post('/reset-password', [
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
+    // const salt = await bcrypt.genSalt(10);
+    // user.password = await bcrypt.hash(password, salt);
+    // user.resetPasswordToken = undefined;
+    // user.resetPasswordExpires = undefined;
+    // await user.save();
+    user.password = password; // let the pre-save hook hash it
+user.resetPasswordToken = undefined;
+user.resetPasswordExpires = undefined;
+await user.save();
+
 
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
@@ -310,4 +297,4 @@ router.post('/reset-password', [
   }
 });
 
-module.exports = router; 
+module.exports = router;

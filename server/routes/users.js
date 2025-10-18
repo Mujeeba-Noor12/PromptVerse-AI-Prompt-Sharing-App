@@ -5,9 +5,34 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/users/profile/:username
-// @desc    Get public user profile
-// @access  Public
+
+router.get('/me/notification-preferences', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('notificationPreferences');
+    res.json(user.notificationPreferences || {});
+  } catch (err) {
+    console.error('Get notif prefs error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+router.put('/me/notification-preferences', auth, async (req, res) => {
+  try {
+    const updates = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { notificationPreferences: updates } },
+      { new: true }
+    ).select('notificationPreferences');
+    res.json(user.notificationPreferences || {});
+  } catch (err) {
+    console.error('Update notif prefs error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 router.get('/profile/:username', optionalAuth, async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
@@ -17,7 +42,7 @@ router.get('/profile/:username', optionalAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Get user's public prompts
+    
     const prompts = await Prompt.find({
       author: user._id,
       isPublic: true
@@ -26,7 +51,7 @@ router.get('/profile/:username', optionalAuth, async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(10);
 
-    // Get user stats
+   
     const totalPrompts = await Prompt.countDocuments({
       author: user._id,
       isPublic: true
@@ -57,9 +82,7 @@ router.get('/profile/:username', optionalAuth, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/me/prompts
-// @desc    Get current user's prompts (including private ones)
-// @access  Private
+
 router.get('/me/prompts', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, isPublic } = req.query;
@@ -93,9 +116,7 @@ router.get('/me/prompts', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/me/liked
-// @desc    Get current user's liked prompts
-// @access  Private
+
 router.get('/me/liked', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -130,9 +151,7 @@ router.get('/me/liked', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/search
-// @desc    Search users by username
-// @access  Public
+
 router.get('/search', async (req, res) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
@@ -169,14 +188,12 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// @route   GET /api/users/top
-// @desc    Get top users by prompt count
-// @access  Public
+
 router.get('/top', async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 10, q } = req.query;
 
-    const topUsers = await Prompt.aggregate([
+    const pipeline = [
       { $match: { isPublic: true } },
       { $group: { _id: '$author', promptCount: { $sum: 1 } } },
       { $sort: { promptCount: -1 } },
@@ -199,7 +216,20 @@ router.get('/top', async (req, res) => {
           promptCount: 1
         }
       }
-    ]);
+    ];
+   
+    if (q && q.trim()) {
+      pipeline.splice(1, 0, {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'userTemp'
+        }
+      }, { $unwind: '$userTemp' }, { $match: { 'userTemp.username': { $regex: q.trim(), $options: 'i' } } });
+    }
+
+    const topUsers = await Prompt.aggregate(pipeline);
 
     res.json({ users: topUsers });
   } catch (error) {

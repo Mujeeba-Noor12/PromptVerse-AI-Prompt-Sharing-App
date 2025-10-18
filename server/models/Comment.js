@@ -45,17 +45,24 @@ const commentSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Virtual for vote count
+
 commentSchema.virtual('voteCount').get(function() {
-  return this.upvotes.length - this.downvotes.length;
+  try {
+    const upCount = this?.upvotes?.length || 0;
+    const downCount = this?.downvotes?.length || 0;
+    return upCount - downCount;
+  } catch (_) {
+    return 0;
+  }
 });
 
-// Method to vote on comment
+
 commentSchema.methods.vote = function(userId, voteType) {
-  const upvoteIndex = this.upvotes.indexOf(userId);
-  const downvoteIndex = this.downvotes.indexOf(userId);
-  
-  // Remove existing votes
+  if (!Array.isArray(this.upvotes)) this.upvotes = [];
+  if (!Array.isArray(this.downvotes)) this.downvotes = [];
+  const upvoteIndex = this.upvotes.findIndex(id => id.toString() === userId.toString());
+  const downvoteIndex = this.downvotes.findIndex(id => id.toString() === userId.toString());
+ 
   if (upvoteIndex !== -1) {
     this.upvotes.splice(upvoteIndex, 1);
   }
@@ -63,7 +70,7 @@ commentSchema.methods.vote = function(userId, voteType) {
     this.downvotes.splice(downvoteIndex, 1);
   }
   
-  // Add new vote
+
   if (voteType === 'upvote') {
     this.upvotes.push(userId);
   } else if (voteType === 'downvote') {
@@ -73,24 +80,30 @@ commentSchema.methods.vote = function(userId, voteType) {
   return this.save();
 };
 
-// Method to check if user has voted
+
 commentSchema.methods.getUserVote = function(userId) {
-  if (this.upvotes.includes(userId)) {
+  if (!Array.isArray(this.upvotes)) this.upvotes = [];
+  if (!Array.isArray(this.downvotes)) this.downvotes = [];
+  if (this.upvotes.some(id => id.toString() === userId.toString())) {
     return 'upvote';
-  } else if (this.downvotes.includes(userId)) {
+  } else if (this.downvotes.some(id => id.toString() === userId.toString())) {
     return 'downvote';
   }
   return null;
 };
 
-// Method to mark as edited
 commentSchema.methods.markAsEdited = function() {
   this.isEdited = true;
   this.editedAt = new Date();
   return this.save();
 };
 
-// Ensure virtuals are included in JSON output
+
 commentSchema.set('toJSON', { virtuals: true });
+
+
+commentSchema.path('upvotes').default([]);
+commentSchema.path('downvotes').default([]);
+commentSchema.path('replies').default([]);
 
 module.exports = mongoose.model('Comment', commentSchema); 

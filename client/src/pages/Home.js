@@ -36,17 +36,12 @@ const Home = () => {
     setFilters(prev => ({ ...prev, page }));
   }, []);
 
-  // const sortOptions = [
-  //   { value: 'newest', label: 'Latest', icon: FiClock },
-  //   { value: 'most', label: 'Most Viewed', icon: FiEye },
-  //   { value: 'usageCount', label: 'Most Used', icon: FiTrendingUp },
-  //   { value: 'likes', label: 'Most Liked', icon: FiHeart },
-  // ];
+
   const sortOptions = [
-  { value: 'newest', label: 'Latest', icon: FiClock },          // createdAt -1
-  { value: 'mostViewed', label: 'Most Viewed', icon: FiEye },   // views -1
-  { value: 'mostUsed', label: 'Most Used', icon: FiTrendingUp },// usageCount -1
-  { value: 'popular', label: 'Most Liked', icon: FiHeart },     // voteCount -1
+  { value: 'newest', label: 'Latest', icon: FiClock },          
+  { value: 'mostViewed', label: 'Most Viewed', icon: FiEye },  
+  { value: 'mostUsed', label: 'Most Used', icon: FiTrendingUp },
+  { value: 'popular', label: 'Most voted', icon: FiHeart },     
 ];
 
 
@@ -66,7 +61,7 @@ const Home = () => {
 
   return (
     <div className="container">
-      {/* Hero Section */}
+    
       <div className="text-center section">
         <h1 className="section-title">
           Discover Amazing AI Prompts
@@ -76,8 +71,8 @@ const Home = () => {
           Join our community of AI enthusiasts and creators.
         </p>
         
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-8">
+        
+        <div className="search-bar max-w-2xl mx-auto mb-8 ">
           <SearchBar onSearch={handleSearch} placeholder="Search prompts, tags, or authors..." />
         </div>
 
@@ -97,16 +92,18 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-8">
+  
+      <div className="mb-8 filter-bar">
         <FilterBar
           filters={filters}
           onFilterChange={handleFilterChange}
           sortOptions={sortOptions}
         />
       </div>
+     
 
-      {/* Results */}
+
+    
       <div className="mb-8">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -129,34 +126,64 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Pagination */}
-            {data.pagination && (data.pagination.hasNext || data.pagination.hasPrev) && (
-              <div className="flex justify-center mt-8">
-                <div className="flex space-x-2">
-                  {data.pagination.hasPrev && (
-                                      <button
-                    onClick={() => handlePageChange(data.pagination.current - 1)}
-                    className="pro-btn-secondary"
-                  >
-                    Previous
-                  </button>
-                )}
-                
-                <span className="px-4 py-2 pro-text-secondary">
-                  Page {data.pagination.current} of {data.pagination.total}
-                </span>
-                
-                {data.pagination.hasNext && (
-                  <button
-                    onClick={() => handlePageChange(data.pagination.current + 1)}
-                    className="pro-btn-secondary"
-                  >
-                    Next
-                  </button>
-                )}
-                </div>
-              </div>
-            )}
+         {data.pagination && data.pagination.total > 1 && (
+  <div className="flex justify-center mt-10">
+    <div className="flex items-center space-x-2 px-4 py-3 rounded-xl shadow-lg border border-gray-300 dark:border-gray-700 dark:bg-[#161b22] bg-white">
+      
+    
+      <button
+        onClick={() => handlePageChange(data.pagination.current - 1)}
+        disabled={!data.pagination.hasPrev}
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
+          ${
+            data.pagination.hasPrev
+              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
+              : 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+          }
+        `}
+      >
+        ← Prev
+      </button>
+
+      
+      <div className="flex items-center space-x-2">
+        {Array.from({ length: data.pagination.total }).map((_, index) => (
+          <button
+            key={index}
+            onClick={() => handlePageChange(index + 1)}
+            className={`w-9 h-9 rounded-md text-sm font-semibold transition-all duration-200 border
+              ${
+                data.pagination.current === index + 1
+                  ? 'bg-blue-600 text-white shadow-md border-blue-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-black dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+              }
+            `}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </div>
+
+ 
+      <button
+        onClick={() => handlePageChange(data.pagination.current + 1)}
+        disabled={!data.pagination.hasNext}
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
+          ${
+            data.pagination.hasNext
+              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
+              : 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+          }
+        `}
+      >
+        Next →
+      </button>
+    </div>
+  </div>
+)}
+
+
+
           </>
         ) : (
           <div className="text-center py-12">

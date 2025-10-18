@@ -52,6 +52,11 @@ const promptSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  uniqueViews: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: []
+  }],
   isPublic: {
     type: Boolean,
     default: true
@@ -69,87 +74,117 @@ const promptSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Ensure array fields default to [] to avoid undefined
+promptSchema.path('upvotes').default([]);
+promptSchema.path('downvotes').default([]);
+promptSchema.path('bookmarks').default([]);
+promptSchema.path('likes').default([]);
+promptSchema.path('tags').default([]);
+
 // Index for search functionality
-promptSchema.index({ 
-  title: 'text', 
-  content: 'text', 
+promptSchema.index({
+  title: 'text',
+  content: 'text',
   tags: 'text',
   description: 'text'
 });
 
-// Virtual for vote count
-promptSchema.virtual('voteCount').get(function() {
-  return this.upvotes.length - this.downvotes.length;
+// Virtuals
+promptSchema.virtual('voteCount').get(function () {
+  const upCount = Array.isArray(this.upvotes) ? this.upvotes.length : 0;
+  const downCount = Array.isArray(this.downvotes) ? this.downvotes.length : 0;
+  return upCount - downCount;
 });
 
-// Virtual for total votes
-promptSchema.virtual('totalVotes').get(function() {
-  return this.upvotes.length + this.downvotes.length;
+promptSchema.virtual('totalVotes').get(function () {
+  const upCount = Array.isArray(this.upvotes) ? this.upvotes.length : 0;
+  const downCount = Array.isArray(this.downvotes) ? this.downvotes.length : 0;
+  return upCount + downCount;
 });
 
-// Method to increment usage count
-promptSchema.methods.incrementUsage = function() {
+
+promptSchema.methods.incrementUsage = function () {
   this.usageCount += 1;
   return this.save();
 };
 
-// Method to increment views
-promptSchema.methods.incrementViews = function() {
-  this.views += 1;
-  return this.save();
+
+promptSchema.methods.addView = async function (userId) {
+
+  if (!userId) {
+    return this; 
+  }
+
+
+  if (this.author.toString() === userId.toString()) {
+    return this;
+  }
+
+
+  if (!this.uniqueViews.some(id => id.toString() === userId.toString())) {
+    this.uniqueViews.push(userId);
+    this.views += 1;
+    await this.save();
+  }
+
+  return this;
 };
 
-// Method to vote (upvote or downvote)
-promptSchema.methods.vote = function(userId, voteType) {
+
+promptSchema.methods.vote = function (userId, voteType) {
   userId = userId.toString();
+  if (!Array.isArray(this.upvotes)) this.upvotes = [];
+  if (!Array.isArray(this.downvotes)) this.downvotes = [];
+
   const upvoteIndex = this.upvotes.findIndex(id => id.toString() === userId);
   const downvoteIndex = this.downvotes.findIndex(id => id.toString() === userId);
-  
-  // Remove existing votes
-  if (upvoteIndex !== -1) {
-    this.upvotes.splice(upvoteIndex, 1);
-  }
-  if (downvoteIndex !== -1) {
-    this.downvotes.splice(downvoteIndex, 1);
-  }
-  
-  // Add new vote
+
+ 
+  if (upvoteIndex !== -1) this.upvotes.splice(upvoteIndex, 1);
+  if (downvoteIndex !== -1) this.downvotes.splice(downvoteIndex, 1);
+
   if (voteType === 'upvote') {
     this.upvotes.push(userId);
   } else if (voteType === 'downvote') {
     this.downvotes.push(userId);
   }
-  
+
   return this.save();
 };
 
-// Method to toggle bookmark
-promptSchema.methods.toggleBookmark = function(userId) {
+promptSchema.methods.toggleBookmark = function (userId) {
   userId = userId.toString();
-  const bookmarkIndex = this.bookmarks.findIndex(id => id.toString() === userId);
-  if (bookmarkIndex === -1) {
+  if (!Array.isArray(this.bookmarks)) this.bookmarks = [];
+
+  const index = this.bookmarks.findIndex(id => id.toString() === userId);
+  if (index === -1) {
     this.bookmarks.push(userId);
   } else {
-    this.bookmarks.splice(bookmarkIndex, 1);
+    this.bookmarks.splice(index, 1);
   }
   return this.save();
 };
 
-// Method to toggle like
-promptSchema.methods.toggleLike = function(userId) {
+
+promptSchema.methods.toggleLike = function (userId) {
   userId = userId.toString();
-  const likeIndex = this.likes.findIndex(id => id.toString() === userId);
-  if (likeIndex === -1) {
+  if (!Array.isArray(this.likes)) this.likes = [];
+
+  const index = this.likes.findIndex(id => id.toString() === userId);
+  if (index === -1) {
     this.likes.push(userId);
   } else {
-    this.likes.splice(likeIndex, 1);
+    this.likes.splice(index, 1);
   }
   return this.save();
 };
 
-// Method to check if user has voted
-promptSchema.methods.getUserVote = function(userId) {
+
+promptSchema.methods.getUserVote = function (userId) {
   userId = userId.toString();
+  if (!Array.isArray(this.upvotes)) this.upvotes = [];
+  if (!Array.isArray(this.downvotes)) this.downvotes = [];
+
   if (this.upvotes.some(id => id.toString() === userId)) {
     return 'upvote';
   } else if (this.downvotes.some(id => id.toString() === userId)) {
@@ -158,13 +193,14 @@ promptSchema.methods.getUserVote = function(userId) {
   return null;
 };
 
-// Method to check if user has bookmarked
-promptSchema.methods.isBookmarkedBy = function(userId) {
+
+promptSchema.methods.isBookmarkedBy = function (userId) {
   userId = userId.toString();
+  if (!Array.isArray(this.bookmarks)) this.bookmarks = [];
   return this.bookmarks.some(id => id.toString() === userId);
 };
 
-// Ensure virtuals are included in JSON output
+
 promptSchema.set('toJSON', { virtuals: true });
 
-module.exports = mongoose.model('Prompt', promptSchema); 
+module.exports = mongoose.model('Prompt', promptSchema);

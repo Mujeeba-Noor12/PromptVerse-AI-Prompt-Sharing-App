@@ -66,7 +66,9 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className='auth-centered'>
+  {/* // <div className="min-h-screen flex   py-12 px-4 sm:px-6 lg:px-8"> */}
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md border border-gray-200 dark:border-gray-800">
       <div className="max-w-md w-full space-y-8">
         <div>
           <Link
@@ -76,7 +78,7 @@ const ForgotPassword = () => {
             <FiArrowLeft className="w-4 h-4 mr-2" />
             Back to Login
           </Link>
-          
+
           <div className="text-center">
             <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6">
               <FiMail className="h-8 w-8 text-white" />
@@ -92,28 +94,36 @@ const ForgotPassword = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Email address
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FiMail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                })}
-                className={`pl-10 input-field ${errors.email ? 'border-red-300' : ''}`}
-                placeholder="Enter your email"
-              />
-            </div>
+             <div className="relative">
+  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+    <FiMail className="h-5 w-5 text-gray-400" />
+  </div>
+  <input
+  id="email"
+  type="email"
+  autoComplete="email"
+  {...register("email", {
+    required: "Email is required",
+    pattern: {
+      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+      message: "Invalid email address",
+    },
+  })}
+  className={`block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-12 py-2 ${
+    errors.email ? "border-red-300" : ""
+  }`}
+  placeholder="Enter your email"
+/>
+
+</div>
+
+
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
             )}
@@ -131,14 +141,14 @@ const ForgotPassword = () => {
                   Sending...
                 </div>
               ) : (
-                'Send Reset Link'
+                "Send Reset Link"
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Remember your password?{' '}
+              Remember your password?{" "}
               <Link
                 to="/login"
                 className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500"
@@ -150,7 +160,9 @@ const ForgotPassword = () => {
         </form>
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default ForgotPassword; 

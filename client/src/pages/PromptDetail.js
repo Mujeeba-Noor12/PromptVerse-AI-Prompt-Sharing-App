@@ -1,11 +1,10 @@
 import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { getPrompt, usePrompt, deletePrompt } from '../api/prompts';
+import {  getPrompt,usePrompt, deletePrompt } from '../api/prompts';
 import { useAuth } from '../contexts/AuthContext';
 import { FiCopy, FiEye, FiTrendingUp, FiUser, FiClock, FiEdit, FiTrash2, FiArrowLeft } from 'react-icons/fi';
-import VoteButtons from '../components/prompts/VoteButtons';
-import BookmarkButton from '../components/prompts/BookmarkButton';
+
 import CommentsSection from '../components/comments/CommentsSection';
 import toast from 'react-hot-toast';
 
@@ -14,6 +13,17 @@ const PromptDetail = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+
+
+  const AI_URLS = {
+  chatgpt: 'https://chat.openai.com',
+  claude: 'https://claude.ai',
+  dalle: 'https://openai.com/dall-e',
+  midjourney: 'https://www.midjourney.com/app',
+  bard: 'https://bard.google.com',
+  gemini: 'https://gemini.google.com',
+  other: 'https://www.perplexity.ai'
+};
 
   const { data: prompt, isLoading, error } = useQuery(
     ['prompt', id],
@@ -50,9 +60,26 @@ const PromptDetail = () => {
     }
   };
 
-  const handleUse = () => {
+ const handleUse = async () => {
+  try {
+    
+    await navigator.clipboard.writeText(prompt.content);
+    toast.success('Prompt copied! Paste in the AI tool.');
+
+ 
     usePromptMutation.mutate(id);
-  };
+
+ 
+    setTimeout(() => {
+      const toolKey = prompt.category?.toLowerCase();
+      const url = AI_URLS[toolKey] || AI_URLS.other;
+      window.open(url, '_blank');
+    }, 500);
+
+  } catch (err) {
+    toast.error('Failed to use prompt');
+  }
+};
 
   const handleEdit = () => {
     navigate(`/prompts/${id}/edit`);
@@ -113,7 +140,7 @@ const PromptDetail = () => {
 
   if (!prompt) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
+      <div className="max-w-4xl mx-auto text-center py-12 prompt-bar">
         <div className="text-gray-600 text-lg mb-4">Prompt not found</div>
         <button onClick={() => navigate('/')} className="btn-primary">
           Go Back
@@ -121,33 +148,43 @@ const PromptDetail = () => {
       </div>
     );
   }
+ 
+  console.log("User:", user);
+console.log("Prompt Author:", prompt.author);
+const isAuthor =
+  (user?.id && prompt.author && (user.id === prompt.author._id || user.id === prompt.author));
 
-  // Defensive check for author
-  const isAuthor = user?._id && prompt.author && user._id === prompt.author._id;
+  
+  // const isAuthor = user?._id && prompt.author && user._id === prompt.author._id;
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
+      
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4"
         >
-          <FiArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <FiArrowLeft className="w-4 h-4 prompt-bar" />
+          <span className='prompt-bar'>Back</span>
         </button>
 
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{prompt.title}</h1>
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              {prompt.author && (
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 prompt-bar">{prompt.title}</h1>
+            <div className="flex items-center space-x-4 text-sm text-gray-600 prompt-bar">
+              {user && prompt.author && (
                 <Link
                   to={`/user/${prompt.author.username}`}
                   className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
                 >
                   <FiUser className="w-4 h-4" />
-                  <span>{prompt.author.username}</span>
+                  <span>
+  {prompt.author.username}
+  {user?.id === prompt.author._id || user?.id === prompt.author ? " (You)" : ""}
+</span>
+
+                 
                 </Link>
               )}
               <span className="flex items-center space-x-1">
@@ -166,7 +203,7 @@ const PromptDetail = () => {
                 onClick={handleEdit}
                 className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
               >
-                <FiEdit className="w-4 h-4" />
+                <FiEdit className="w-4 h-4 prompt-bar" />
                 <span>Edit</span>
               </button>
               <button
@@ -181,7 +218,7 @@ const PromptDetail = () => {
         </div>
       </div>
 
-      {/* Content */}
+     
       <div className="pro-card mb-6">
         {prompt.description && (
           <div className="mb-4">
@@ -226,13 +263,16 @@ const PromptDetail = () => {
             <span className="flex items-center space-x-1">
               <span className="font-medium">
                 {prompt.voteCount > 0 ? '+' : ''}{prompt.voteCount}
-              </span>
-              <span>votes</span>
+              </span> 
+               <span>votes</span>
             </span>
+          
+
+            
           </div>
         </div>
 
-        {/* Actions */}
+   
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
             <button
@@ -243,21 +283,18 @@ const PromptDetail = () => {
               <span>Copy Prompt</span>
             </button>
             <button
-              onClick={handleUse}
+             onClick={handleUse}
               className="flex items-center space-x-1 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               <FiTrendingUp className="w-4 h-4" />
               <span>Mark as Used</span>
             </button>
           </div>
-          <div className="flex items-center space-x-3">
-            <VoteButtons prompt={prompt} size="md" />
-            <BookmarkButton prompt={prompt} size="md" />
-          </div>
+        
         </div>
       </div>
 
-      {/* Comments Section */}
+   
       <CommentsSection promptId={id} />
     </div>
   );

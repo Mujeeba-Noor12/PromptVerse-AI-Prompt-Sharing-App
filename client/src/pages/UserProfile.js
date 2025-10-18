@@ -1,12 +1,15 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { getUserProfile } from '../api/prompts';
 import PromptCard from '../components/prompts/PromptCard';
-import { FiUser, FiFileText, FiEye, FiHeart } from 'react-icons/fi';
+import { FiFileText, FiEye, FiHeart } from 'react-icons/fi';
+import { useAuth } from '../contexts/AuthContext';
 
 const UserProfile = () => {
   const { username } = useParams();
+  const { user: currentUser } = useAuth();
 
   const { data, isLoading, error } = useQuery(
     ['userProfile', username],
@@ -47,18 +50,18 @@ const UserProfile = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* User Header */}
-      <div className="card mb-8">
+    
+      <div className="pro-card mb-8">
         <div className="flex items-start space-x-6">
           <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">
+            <span className="text-white font-bold text-2xl prompt-bar">
               {user.username.charAt(0).toUpperCase()}
             </span>
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{user.username}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 prompt-bar">{user.username}</h1>
             {user.bio && (
-              <p className="text-grayUncaught-600 mb-4">{user.bio}</p>
+              <p className="text-gray-600 mb-4 prompt-bar ">{user.bio}</p>
             )}
             <div className="flex items-center space-x-6 text-sm text-gray-500">
               <div className="flex items-center space-x-1">
@@ -78,10 +81,18 @@ const UserProfile = () => {
         </div>
       </div>
 
-      {/* User's Prompts */}
+  
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Prompts by {user.username}</h2>
-        
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 prompt-bar">
+  Prompts by{' '}
+  <span className="text-blue-600">
+    {currentUser && (currentUser._id === user._id || currentUser.id === user._id)
+      ? 'You'
+      : user.username}
+  </span>
+</h2>
+
+
         {prompts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
             {prompts.map((prompt) => (
@@ -90,8 +101,8 @@ const UserProfile = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="text-gray-500 text-lg mb-4">No prompts yet</div>
-            <p className="text-gray-600">This user hasn't shared any prompts yet.</p>
+            <div className="text-gray-500 text-lg mb-4 prompt-bar">No prompts yet</div>
+            <p className="text-gray-600 prompt-bar">This user hasn't shared any prompts yet.</p>
           </div>
         )}
       </div>
@@ -99,4 +110,4 @@ const UserProfile = () => {
   );
 };
 
-export default UserProfile; 
+export default UserProfile;

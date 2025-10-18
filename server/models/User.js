@@ -31,6 +31,30 @@ const userSchema = new mongoose.Schema({
     maxlength: 500,
     default: ''
   },
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  notificationPreferences: {
+    muteAll: { type: Boolean, default: false },
+    types: {
+      comment: { type: Boolean, default: true },
+      reply: { type: Boolean, default: true },
+      like: { type: Boolean, default: true },
+      upvote: { type: Boolean, default: true },
+      downvote: { type: Boolean, default: true },
+      bookmark: { type: Boolean, default: true },
+      system: { type: Boolean, default: true },
+      mention: { type: Boolean, default: true }
+    },
+    digest: {
+      frequency: { type: String, enum: ['off', 'daily', 'weekly'], default: 'off' }
+    }
+  },
   isVerified: {
     type: Boolean,
     default: false
@@ -45,7 +69,6 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
@@ -58,12 +81,12 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Method to compare password
+
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to get public profile
+
 userSchema.methods.getPublicProfile = function() {
   const userObject = this.toObject();
   delete userObject.password;

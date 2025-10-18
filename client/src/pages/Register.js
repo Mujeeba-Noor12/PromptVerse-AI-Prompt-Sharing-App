@@ -38,7 +38,7 @@ const Register = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      // Remove confirmPassword from the data sent to server
+    
       const { confirmPassword, ...userData } = data;
       await registerMutation.mutateAsync(userData);
     } finally {

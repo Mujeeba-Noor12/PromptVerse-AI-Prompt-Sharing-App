@@ -1,24 +1,36 @@
  
-import React, { useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery } from 'react-query';
 import { getLikedPrompts } from '../api/prompts';
 import PromptCard from '../components/prompts/PromptCard';
 import { FiHeart } from 'react-icons/fi';
 
 const LikedPrompts = () => {
-  const { data, isLoading, error, refetch } = useQuery(
-    ['likedPrompts'],
-    getLikedPrompts
-  );
+  // const { data, isLoading, error, refetch } = useQuery(
+  //   ['likedPrompts',filters],
+  //   getLikedPrompts
+  // );
+   const [filters, setFilters] = useState({
+      
+      page: 1
+    });
+  const { data, isLoading, error ,refetch} = useQuery(
+  ['likedPrompts', filters],
+  () => getLikedPrompts(filters),
+  { keepPreviousData: true }
+);
+  
 
   const loadLikedPrompts = useCallback(() => {
-    refetch(); // Triggers refresh from server
+    refetch(); 
   }, [refetch]);
-
+ const handlePageChange = useCallback((page) => {
+    setFilters(prev => ({ ...prev, page }));
+  }, []);
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Liked Prompts</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 prompt-bar">Liked Prompts</h1>
         <p className="text-gray-600">Your collection of favorite AI prompts</p>
       </div>
 
@@ -38,10 +50,10 @@ const LikedPrompts = () => {
         </div>
       ) : error ? (
         <div className="text-center py-12">
-          <div className="text-red-600 text-lg mb-4">Error loading liked prompts</div>
+          <div className="text-red-600 text-lg mb-4 prompt-bar">Error loading liked prompts</div>
           <button 
             onClick={() => window.location.reload()}
-            className="btn-primary"
+            className="btn-primary prompt-bar"
           >
             Try Again
           </button>
@@ -53,45 +65,79 @@ const LikedPrompts = () => {
               <PromptCard
                 key={prompt._id}
                 prompt={prompt}
-                onBookmarkToggle={loadLikedPrompts}  // ✅ passes the refetch function
+                onBookmarkToggle={loadLikedPrompts}  
 
-                onRefresh={loadLikedPrompts} // ✅ for like/use/vote refresh
+                onRefresh={loadLikedPrompts} 
               />
             ))}
           </div>
 
-          {/* Pagination */}
-          {data?.pagination && (data.pagination.hasNext || data.pagination.hasPrev) && (
-            <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
-                {data.pagination.hasPrev && (
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Previous
-                  </button>
-                )}
+      {data.pagination && (
+  <div className="flex justify-center mt-10">
+    <div className="flex items-center space-x-2 bg-white dark:bg-[#161b22] px-4 py-3 rounded-xl shadow-lg border border-gray-300 dark:border-gray-700 transition-all duration-300">
+      
+      {/* Previous Button */}
+      <button
+        onClick={() => handlePageChange(data.pagination.current - 1)}
+        disabled={!data.pagination.hasPrev}
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
+          ${
+            data.pagination.hasPrev
+              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
+              : 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-500 cursor-not-allowed'
+          }
+        `}
+      >
+        ← Prev
+      </button>
 
-                <span className="px-4 py-2 text-gray-600">
-                  Page {data.pagination.current} of {data.pagination.total}
-                </span>
+      {/* Page numbers */}
+      <div className="flex items-center space-x-2">
+        {Array.from({ length: data.pagination.total }).map((_, index) => (
+          <button
+            key={index}
+            onClick={() => handlePageChange(index + 1)}
+            className={`w-9 h-9 rounded-md text-sm font-semibold transition-all duration-200 border
+              ${
+                data.pagination.current === index + 1
+                  ? 'bg-blue-600 text-white shadow-md border-blue-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-black dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+              }
+            `}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </div>
 
-                {data.pagination.hasNext && (
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Next
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+      {/* Next Button */}
+      <button
+        onClick={() => handlePageChange(data.pagination.current + 1)}
+        disabled={!data.pagination.hasNext}
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
+          ${
+            data.pagination.hasNext
+              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md'
+              : 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-500 cursor-not-allowed'
+          }
+        `}
+      >
+        Next →
+      </button>
+    </div>
+  </div>
+)}
+
         </>
       ) : (
         <div className="text-center py-12">
-          <div className="text-gray-500 text-lg mb-4">No liked prompts yet</div>
+          <div className="text-gray-500 text-lg mb-4 prompt-bar">No liked prompts yet</div>
           <p className="text-gray-600 mb-6">
             Start exploring and liking prompts to see them here!
           </p>
           <button
             onClick={() => window.location.href = '/'}
-            className="btn-primary"
+            className="btn-primary prompt-bar"
           >
             Explore Prompts
           </button>

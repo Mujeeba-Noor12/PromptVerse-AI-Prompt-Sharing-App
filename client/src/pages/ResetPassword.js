@@ -76,8 +76,9 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="auth-centered bg-white">
+         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 w-full max-w-md border border-gray-200 dark:border-gray-800">
+
         <div>
           <Link
             to="/login"
@@ -120,9 +121,13 @@ const ResetPassword = () => {
                     message: 'Password must be at least 6 characters',
                   },
                 })}
-                className={`pl-10 pr-10 input-field ${errors.password ? 'border-red-300' : ''}`}
+                 className={`block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-12 py-2 ${
+    errors.email ? "border-red-300" : ""
+  }`}
                 placeholder="Enter new password"
               />
+             
+
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -152,7 +157,9 @@ const ResetPassword = () => {
                   required: 'Please confirm your password',
                   validate: (value) => value === password || 'Passwords do not match',
                 })}
-                className={`pl-10 pr-10 input-field ${errors.confirmPassword ? 'border-red-300' : ''}`}
+                 className={`block w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm pl-12 py-2 ${
+    errors.email ? "border-red-300" : ""
+  }`}
                 placeholder="Confirm new password"
               />
               <button

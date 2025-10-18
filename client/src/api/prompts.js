@@ -40,6 +40,8 @@ export const getPrompt = async (id) => {
   return response.data;
 };
 
+
+
 // Create prompt
 export const createPrompt = async (promptData) => {
   const response = await api.post('/prompts', promptData);
@@ -86,10 +88,17 @@ export const toggleLike = async (id) => {
   const response = await api.post(`/prompts/${id}/like`);
   return response.data;
 };
-export const fetchBookmarkedPrompts = async () => {
-  const response = await api.get('/prompts/bookmarks/me');
+// export const fetchBookmarkedPrompts = async () => {
+//   const response = await api.get('/prompts/bookmarks/me');
+//   return response.data;
+// };
+export const fetchBookmarkedPrompts = async ({ page = 1, limit = 10 }) => {
+  const response = await api.get(`/prompts/bookmarks/me`, {
+    params: { page, limit },
+  });
   return response.data;
 };
+
 
 // Get comments for prompt
 export const getComments = async (promptId, params = {}) => {
@@ -148,3 +157,25 @@ export const getTopUsers = async (params = {}) => {
   const response = await api.get('/users/top', { params });
   return response.data;
 }; 
+
+// Follow / Unfollow
+export const followUser = async (username) => {
+  const response = await api.post(`/users/${username}/follow`);
+  return response.data;
+};
+
+export const unfollowUser = async (username) => {
+  const response = await api.post(`/users/${username}/unfollow`);
+  return response.data;
+};
+
+// Notification preferences
+export const getNotificationPreferences = async () => {
+  const response = await api.get('/users/me/notification-preferences');
+  return response.data;
+};
+
+export const updateNotificationPreferences = async (prefs) => {
+  const response = await api.put('/users/me/notification-preferences', prefs);
+  return response.data;
+};

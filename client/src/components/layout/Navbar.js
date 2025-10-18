@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { FiMenu, FiX, FiSearch, FiPlus, FiUser, FiLogOut, FiHeart, FiFileText, FiSun, FiMoon,FiBookmark } from 'react-icons/fi';
+import NotificationBell from '../common/NotificationBell';
+import { FiMenu, FiX, FiSearch,  FiPlus, FiUser, FiLogOut, FiHeart, FiFileText, FiSun, FiMoon,FiBookmark, FiHome } from 'react-icons/fi';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -19,47 +20,48 @@ const Navbar = () => {
     <nav className="pro-nav sticky top-0 z-50">
       <div className="container">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+       
           <Link to="/" className="flex items-center space-x-3 group">
             
             <span className="text-xl font-bold pro-text-primary">PromptVerse</span>
           </Link>
 
-          {/* Desktop Navigation */}
+       
           <div className="hidden md:flex items-center space-x-4">
             <Link
               to="/"
-              className="pro-text-secondary hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="pro-text-secondary hover:text-blue-600 dark:hover:text-white-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              {/* Home */}
+            
             </Link>
             
             {isAuthenticated ? (
               <>
+              
                 <Link
                   to="/create"
-                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   <FiPlus className="w-4 h-4" />
                   <span>Create</span>
                 </Link>
                 <Link
                   to="/my-prompts"
-                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   <FiFileText className="w-4 h-4" />
                   <span>My Prompts</span>
                 </Link>
                 <Link
                   to="/liked"
-                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   <FiHeart className="w-4 h-4" />
                   <span>Liked</span>
                 </Link>
                 <Link
                   to="/bookmark"
-                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="flex items-center space-x-2 pro-text-secondary hover:text-blue-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   <FiBookmark className="w-4 h-4" />
                   <span>BookMarked</span>
@@ -68,12 +70,15 @@ const Navbar = () => {
             ) : null}
           </div>
 
-          {/* User Menu */}
+        
           <div className="hidden md:flex items-center space-x-4">
-            {/* Theme Toggle */}
+      
+            {isAuthenticated && <NotificationBell />}
+            
+          
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-md pro-text-secondary hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="p-2 rounded-md pro-text-secondary hover:text-blue-600 dark:hover:text-white transition-colors"
             >
               {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
             </button>
@@ -93,7 +98,7 @@ const Navbar = () => {
                 <div className="absolute right-0 mt-2 w-48 pro-card shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                   <Link
                     to="/profile"
-                    className="flex items-center space-x-2 px-4 py-2 text-sm pro-text-secondary hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 text-sm pro-text-secondary hover:bg-gray-50  dark:hover:bg-gray-700 transition-colors"
                   >
                     <FiUser className="w-4 h-4" />
                     <span>Profile</span>

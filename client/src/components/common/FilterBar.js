@@ -22,15 +22,15 @@ const FilterBar = ({ filters, onFilterChange, sortOptions }) => {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-4 bg-white rounded-lg border border-gray-200">
+    <div className="flex flex-wrap items-center gap-4 p-4 bg-white rounded-lg border border-gray-200 filter-bar">
       {/* Category Filter */}
       <div className="flex items-center space-x-2">
-        <label className="text-sm font-medium text-gray-700">Category:</label>
+        <label className="text-sm font-medium text-gray-700 prompt-bar">Category:</label>
         <div className="relative">
           <select
             value={filters.category}
             onChange={handleCategoryChange}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="filter-bar appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {categories.map((category) => (
               <option key={category.value} value={category.value}>
@@ -44,12 +44,12 @@ const FilterBar = ({ filters, onFilterChange, sortOptions }) => {
 
       {/* Sort Options */}
       <div className="flex items-center space-x-2">
-        <label className="text-sm font-medium text-gray-700">Sort by:</label>
+        <label className="text-sm font-medium text-gray-700 prompt-bar">Sort by:</label>
         <div className="relative">
           <select
             value={`${filters.sort}-${filters.order}`}
             onChange={handleSortChange}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="filter-bar appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={`${option.value}-${filters.order}`}>
@@ -64,7 +64,7 @@ const FilterBar = ({ filters, onFilterChange, sortOptions }) => {
       {/* Order Toggle */}
       <button
         onClick={() => onFilterChange({ order: filters.order === 'desc' ? 'asc' : 'desc' })}
-        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-[#30363d] transition-colors"
       >
         {filters.order === 'desc' ? '↓' : '↑'}
       </button>
@@ -72,7 +72,7 @@ const FilterBar = ({ filters, onFilterChange, sortOptions }) => {
       {/* Active Filters Display */}
       {(filters.category !== 'all' || filters.search) && (
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">Active filters:</span>
+          <span className="text-sm text-gray-500 prompt-bar">Active filters:</span>
           {filters.category !== 'all' && (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               {categories.find(c => c.value === filters.category)?.label}

@@ -1,28 +1,52 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const Prompt = require('../models/Prompt');
+const User = require('../models/User');
 const Comment = require('../models/Comment');
-const { auth } = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
+const { sendNotification } = require('./sendNotification');
 
 const router = express.Router();
 
-// @route   GET /api/prompts
-// @desc    Get all prompts
-// @access  Public
+
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, search, sort = 'newest' } = req.query;
-    
+    const { page = 1, limit = 10, category, search, sort = 'newest', q } = req.query;
     let query = { isPublic: true };
     
     if (category && category !== 'all') {
       query.category = category;
     }
     
-    if (search) {
-      query.$text = { $search: search };
-    }
-    
+    const searchTerm = (q || search || '').trim();
+   
+  if (searchTerm) {
+  const matchedAuthors = await User.find({
+    username: { $regex: searchTerm, $options: 'i' }
+  }).select('_id username');
+
+  console.log('Matched authors:', matchedAuthors);
+console.log('QUERY:', req.query);
+
+  const authorIds = matchedAuthors.map(u => u._id);
+  const orConditions = [
+    { title: { $regex: searchTerm, $options: 'i' } },
+    { description: { $regex: searchTerm, $options: 'i' } },
+    { tags: { $regex: searchTerm, $options: 'i' } },
+  ];
+
+  if (authorIds.length > 0) {
+    orConditions.push({ author: { $in: authorIds } });
+  }
+
+  query.$or = orConditions;
+}
+
+
+
+
+    // sorting logic same
     let sortOption = {};
     switch (sort) {
       case 'popular':
@@ -37,21 +61,23 @@ router.get('/', async (req, res) => {
       default:
         sortOption = { createdAt: -1 };
     }
-    
+
     const prompts = await Prompt.find(query)
       .populate('author', 'username avatar')
       .sort(sortOption)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
-    
+      .limit(Number(limit))
+      .skip((page - 1) * Number(limit));
+
     const total = await Prompt.countDocuments(query);
-    
+
     res.json({
       prompts,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
+      pagination: {
+        current: Number(page),
+        total: Math.ceil(total / limit),
+        hasNext: Number(page) * Number(limit) < total,
+        hasPrev: Number(page) > 1
+      }
     });
   } catch (error) {
     console.error('Get prompts error:', error);
@@ -59,34 +85,85 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/prompts/:id
-// @desc    Get single prompt
-// @access  Public
-router.get('/:id', async (req, res) => {
-  try {
-    const prompt = await Prompt.findById(req.params.id)
-      .populate('author', 'username avatar')
-      .populate('upvotes', 'username')
-      .populate('downvotes', 'username')
-      .populate('bookmarks', 'username');
+
+
+//   try {
+//     const id = req.params.id && typeof req.params.id === 'string' ? req.params.id : '';
+   
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ message: 'Invalid prompt id' });
+//     }
+
+//     const prompt = await Prompt.findById(id)
+//       .populate('author', 'username avatar')
+//       .populate('upvotes', 'username')
+//       .populate('downvotes', 'username')
+//       .populate('bookmarks', 'username');
     
+//     if (!prompt) {
+//       return res.status(404).json({ message: 'Prompt not found' });
+//     }
+    
+//     // ✅ Increment views only if user is not the author
+//     if (!req.user || prompt.author._id.toString() !== req.user._id.toString()) {
+//       await prompt.incrementViews();
+//     }
+    
+//     res.json(prompt);
+//   } catch (error) {
+//     console.error('Get prompt error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
+
+
+
+
+// router.get('/:id', async (req, res) => {
+//   try {
+//     const id = req.params.id && typeof req.params.id === 'string' ? req.params.id : '';
+   
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ message: 'Invalid prompt id' });
+//     }
+
+//     const prompt = await Prompt.findById(id)
+//       .populate('author', 'username avatar')
+//       .populate('upvotes', 'username')
+//       .populate('downvotes', 'username')
+//       .populate('bookmarks', 'username');
+    
+//     if (!prompt) {
+//       return res.status(404).json({ message: 'Prompt not found' });
+//     }
+    
+//     // Increment views
+//     await prompt.incrementViews();
+    
+//     res.json(prompt);
+//   } catch (error) {
+//     console.error('Get prompt error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
+router.get('/:id', optionalAuth, async (req, res) => {
+  try {
+    const prompt = await Prompt.findById(req.params.id).populate('author', 'username avatar');
+
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
     }
-    
-    // Increment views
-    await prompt.incrementViews();
-    
+
+    await prompt.addView(req.user?._id);
+
     res.json(prompt);
   } catch (error) {
-    console.error('Get prompt error:', error);
+    console.error('Error fetching prompt:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   POST /api/prompts
-// @desc    Create a prompt
-// @access  Private
+
 router.post('/', auth, [
   body('title')
     .isLength({ min: 1, max: 100 })
@@ -108,7 +185,7 @@ router.post('/', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
     
-    const { title, content, description, tags,isPublic , category } = req.body;
+    const { title, content, description, tags, isPublic, category } = req.body;
     
     const prompt = new Prompt({
       title,
@@ -116,10 +193,7 @@ router.post('/', auth, [
       description: description || '',
       tags: tags || [],
       category,
-      isPublic,
-
-      // isPublic: typeof isPublic === 'boolean' ? isPublic : true, // fallback safety
-
+      isPublic: typeof isPublic === 'boolean' ? isPublic : true,
       author: req.user._id
     });
     
@@ -127,17 +201,40 @@ router.post('/', auth, [
     
     const populatedPrompt = await Prompt.findById(prompt._id)
       .populate('author', 'username avatar');
-    
+
     res.status(201).json(populatedPrompt);
+
+    if (prompt.isPublic) {
+      setImmediate(async () => {
+        try {
+          const author = await User.findById(req.user._id).select('followers username');
+          const followerIds = (author?.followers || []).filter(id => id.toString() !== req.user._id.toString());
+          if (followerIds.length === 0) return;
+
+          const message = `${req.user.username} posted a new prompt "${prompt.title}"`;
+
+          for (const recipientId of followerIds) {
+            await sendNotification({
+              userId: recipientId,
+              senderId: req.user._id,
+              type: 'system',
+              promptId: prompt._id,
+              message
+            });
+          }
+        } catch (notifyErr) {
+          console.error('Broadcast new prompt notifications error:', notifyErr);
+        }
+      });
+    }
   } catch (error) {
     console.error('Create prompt error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   PUT /api/prompts/:id
-// @desc    Update a prompt
-// @access  Private
+
+
 router.put('/:id', auth, [
   body('title')
     .optional()
@@ -157,8 +254,11 @@ router.put('/:id', auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
-    const prompt = await Prompt.findById(req.params.id);
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const prompt = await Prompt.findById(id);
     
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
@@ -169,7 +269,7 @@ router.put('/:id', auth, [
     }
     
     const updatedPrompt = await Prompt.findByIdAndUpdate(
-      req.params.id,
+      id,
       req.body,
       { new: true, runValidators: true }
     ).populate('author', 'username avatar');
@@ -181,12 +281,14 @@ router.put('/:id', auth, [
   }
 });
 
-// @route   DELETE /api/prompts/:id
-// @desc    Delete a prompt
-// @access  Private
+
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const prompt = await Prompt.findById(req.params.id);
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const prompt = await Prompt.findById(id);
     
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
@@ -196,7 +298,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
     
-    await Prompt.findByIdAndDelete(req.params.id);
+    await Prompt.findByIdAndDelete(id);
     
     res.json({ message: 'Prompt deleted successfully' });
   } catch (error) {
@@ -205,12 +307,14 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/prompts/:id/use
-// @desc    Increment usage count for a prompt
-// @access  Public
+
 router.post('/:id/use', async (req, res) => {
   try {
-    const prompt = await Prompt.findById(req.params.id);
+    const id = req.params.id && typeof req.params.id === 'string' ? req.params.id : '';
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const prompt = await Prompt.findById(id);
     
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
@@ -225,9 +329,7 @@ router.post('/:id/use', async (req, res) => {
   }
 });
 
-// @route   POST /api/prompts/:id/vote
-// @desc    Vote on a prompt
-// @access  Private
+
 router.post('/:id/vote', auth, [
   body('voteType')
     .isIn(['upvote', 'downvote'])
@@ -238,8 +340,11 @@ router.post('/:id/vote', auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
-    const prompt = await Prompt.findById(req.params.id);
+    const id = req.params.id && typeof req.params.id === 'string' ? req.params.id : '';
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const prompt = await Prompt.findById(id);
     
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
@@ -247,22 +352,24 @@ router.post('/:id/vote', auth, [
     
     await prompt.vote(req.user._id, req.body.voteType);
     
-    const updatedPrompt = await Prompt.findById(req.params.id)
+    const updatedPrompt = await Prompt.findById(id)
       .populate('author', 'username avatar');
     
     res.json(updatedPrompt);
   } catch (error) {
     console.error('Vote error:', error);
-    res.status(500).json({ message: error.message || 'Server error', error });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 
-// @route   POST /api/prompts/:id/bookmark
-// @desc    Toggle bookmark on a prompt
-// @access  Private
+
 router.post('/:id/bookmark', auth, async (req, res) => {
   try {
-    const prompt = await Prompt.findById(req.params.id);
+    const id = req.params.id && typeof req.params.id === 'string' ? req.params.id : '';
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const prompt = await Prompt.findById(id);
     
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
@@ -270,59 +377,123 @@ router.post('/:id/bookmark', auth, async (req, res) => {
     
     await prompt.toggleBookmark(req.user._id);
     
-    const updatedPrompt = await Prompt.findById(req.params.id)
+    const updatedPrompt = await Prompt.findById(id)
       .populate('author', 'username avatar');
     
     res.json(updatedPrompt);
   } catch (error) {
     console.error('Bookmark error:', error);
-    res.status(500).json({ message: error.message || 'Server error', error });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
-// @route   GET /api/prompts/bookmarks/me
-// @desc    Get prompts bookmarked by the current user
-// @access  Private
+// ✅ Get bookmarked prompts (with pagination)
 router.get('/bookmarks/me', auth, async (req, res) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const total = await Prompt.countDocuments({ bookmarks: req.user._id });
+
     const prompts = await Prompt.find({ bookmarks: req.user._id })
       .populate('author', 'username avatar')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .exec();
 
-    res.json(prompts);
+    res.json({
+      prompts,
+      pagination: {
+        current: Number(page),
+        total: Math.ceil(total / limit),
+        hasNext: Number(page) * Number(limit) < total,
+        hasPrev: Number(page) > 1
+      }
+    });
   } catch (error) {
     console.error('Get bookmarks error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   POST /api/prompts/:id/like
-// @desc    Toggle like on a prompt
-// @access  Private
+
+
+router.get('/users/me/liked', auth, async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const query = { likes: req.user._id };
+
+    const total = await Prompt.countDocuments(query);
+
+    const prompts = await Prompt.find(query)
+      .populate('author', 'username avatar')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .exec();
+
+    res.json({
+      prompts,
+      pagination: {
+        current: Number(page),
+        total: Math.ceil(total / limit),
+        hasNext: Number(page) * Number(limit) < total,
+        hasPrev: Number(page) > 1
+      }
+    });
+  } catch (error) {
+    console.error('Get liked prompts error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
 router.post('/:id/like', auth, async (req, res) => {
   try {
-    const prompt = await Prompt.findById(req.params.id);
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const prompt = await Prompt.findById(id);
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
     }
+    
     await prompt.toggleLike(req.user._id);
-    const updatedPrompt = await Prompt.findById(req.params.id)
+    
+    if (prompt.author.toString() !== req.user._id.toString()) {
+      await sendNotification({
+        userId: prompt.author,
+        senderId: req.user._id,
+        type: 'like',
+        promptId: prompt._id,
+        message: `${req.user.username} liked your prompt "${prompt.title}"`
+      });
+    }
+    
+    const updatedPrompt = await Prompt.findById(id)
       .populate('author', 'username avatar');
+    
     res.json(updatedPrompt);
   } catch (error) {
     console.error('Like error:', error);
-    res.status(500).json({ message: error.message || 'Server error', error });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
-// @route   GET /api/prompts/:id/comments
-// @desc    Get all comments (including replies) for a prompt
-// @access  Public
+
+
 router.get('/:id/comments', async (req, res) => {
   try {
-    const comments = await Comment.find({ prompt: req.params.id })
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    const comments = await Comment.find({ prompt: id })
       .populate('author', 'username avatar')
       .populate('upvotes', 'username')
       .populate('downvotes', 'username')
-      .sort({ createdAt: 1 }); // optional: oldest first, or change to -1 for newest
+      .sort({ createdAt: 1 });
 
     res.json({ comments });
   } catch (error) {
@@ -342,25 +513,83 @@ router.post('/:id/comments', auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
-    const prompt = await Prompt.findById(req.params.id);
-    
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid prompt id' });
+    }
+    if (req.body.parent && !mongoose.Types.ObjectId.isValid(req.body.parent)) {
+      return res.status(400).json({ message: 'Invalid parent comment id' });
+    }
+
+    const prompt = await Prompt.findById(id);
     if (!prompt) {
       return res.status(404).json({ message: 'Prompt not found' });
     }
-    
+
     const comment = new Comment({
       content: req.body.content,
       author: req.user._id,
-      prompt: req.params.id,
+      prompt: id,
       parent: req.body.parent || null
     });
-    
+
     await comment.save();
-    
+
     const populatedComment = await Comment.findById(comment._id)
       .populate('author', 'username avatar');
-    
+
+    // Notification: Comment on prompt
+    if (prompt.author.toString() !== req.user._id.toString()) {
+      await sendNotification({
+        userId: prompt.author,
+        senderId: req.user._id,
+        type: 'comment',
+        promptId: prompt._id,
+        commentId: comment._id,
+        message: `${req.user.username} commented on your prompt "${prompt.title}"`
+      });
+    }
+
+   
+    if (req.body.parent) {
+      const parentComment = await Comment.findById(req.body.parent).populate('author');
+      if (
+        parentComment &&
+        parentComment.author &&
+        parentComment.author._id.toString() !== req.user._id.toString()
+      ) {
+        await sendNotification({
+          userId: parentComment.author._id,
+          senderId: req.user._id,
+          type: 'reply',
+          promptId: prompt._id,
+          commentId: comment._id,
+          message: `${req.user.username} replied to your comment on "${prompt.title}"`
+        });
+      }
+    }
+
+    try {
+      const mentionMatches = (req.body.content || '').match(/@([A-Za-z0-9_]+)/g) || [];
+      if (mentionMatches.length > 0) {
+        const usernames = Array.from(new Set(mentionMatches.map(m => m.slice(1)))).slice(0, 10);
+        const mentionedUsers = await User.find({ username: { $in: usernames } }).select('_id username');
+        for (const mentioned of mentionedUsers) {
+          if (mentioned._id.toString() === req.user._id.toString()) continue;
+          await sendNotification({
+            userId: mentioned._id,
+            senderId: req.user._id,
+            type: 'mention',
+            promptId: prompt._id,
+            commentId: comment._id,
+            message: `${req.user.username} mentioned you in a comment on "${prompt.title}"`
+          });
+        }
+      }
+    } catch (mentionErr) {
+      // do not block
+    }
+
     res.status(201).json(populatedComment);
   } catch (error) {
     console.error('Add comment error:', error);
@@ -368,9 +597,7 @@ router.post('/:id/comments', auth, [
   }
 });
 
-// @route   POST /api/comments/:id/vote
-// @desc    Vote on a comment
-// @access  Private
+
 router.post('/comments/:id/vote', auth, [
   body('voteType')
     .isIn(['upvote', 'downvote'])
@@ -381,8 +608,11 @@ router.post('/comments/:id/vote', auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
-    const comment = await Comment.findById(req.params.id);
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid comment id' });
+    }
+    const comment = await Comment.findById(id);
     
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
@@ -390,7 +620,7 @@ router.post('/comments/:id/vote', auth, [
     
     await comment.vote(req.user._id, req.body.voteType);
     
-    const updatedComment = await Comment.findById(req.params.id)
+    const updatedComment = await Comment.findById(id)
       .populate('author', 'username avatar');
     
     res.json(updatedComment);
@@ -400,9 +630,7 @@ router.post('/comments/:id/vote', auth, [
   }
 });
 
-// @route   PUT /api/comments/:id
-// @desc    Update a comment
-// @access  Private
+
 router.put('/comments/:id', auth, [
   body('content')
     .isLength({ min: 1, max: 1000 })
@@ -413,8 +641,11 @@ router.put('/comments/:id', auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
-    const comment = await Comment.findById(req.params.id);
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid comment id' });
+    }
+    const comment = await Comment.findById(id);
     
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
@@ -427,7 +658,7 @@ router.put('/comments/:id', auth, [
     comment.content = req.body.content;
     await comment.markAsEdited();
     
-    const updatedComment = await Comment.findById(req.params.id)
+    const updatedComment = await Comment.findById(id)
       .populate('author', 'username avatar');
     
     res.json(updatedComment);
@@ -440,27 +671,37 @@ router.put('/comments/:id', auth, [
 
 router.delete('/comments/:id', auth, async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.id);
-    
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid comment id' });
+    }
+
+    const comment = await Comment.findById(id);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
     }
-    
-    if (comment.author.toString() !== req.user._id.toString()) {
+
+    if (comment.author.toString() !== req.user._id.toString() && !req.user.isAdmin) {
       return res.status(401).json({ message: 'Not authorized' });
     }
-    
-    await Comment.findByIdAndDelete(req.params.id);
-    
-    res.json({ message: 'Comment deleted successfully' });
+
+ 
+    await Comment.deleteMany({
+      $or: [
+        { _id: id },
+        { parent: id }
+      ]
+    });
+
+    res.json({ message: 'Comment and its replies deleted successfully' });
   } catch (error) {
     console.error('Delete comment error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
-// @route   GET /api/users/me/prompts
-// @desc    Get prompts created by the logged-in user (with optional isPublic filter)
-// @access  Private
+
+
+
 router.get('/users/me/prompts', auth, async (req, res) => {
   try {
     const { isPublic, page = 1, limit = 20 } = req.query;
@@ -468,7 +709,7 @@ router.get('/users/me/prompts', auth, async (req, res) => {
     const query = { author: req.user._id };
 
     if (isPublic !== undefined) {
-      query.isPublic = isPublic === 'true'; // query params come as strings!
+      query.isPublic = isPublic === 'true';
     }
 
     const prompts = await Prompt.find(query)
@@ -494,6 +735,4 @@ router.get('/users/me/prompts', auth, async (req, res) => {
   }
 });
 
-
-module.exports = router; 
-
+module.exports = router;

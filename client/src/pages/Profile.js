@@ -40,10 +40,7 @@ const totalViews = safePrompts.reduce((sum, p) => sum + (p?.views || 0), 0);
 const totalLikes = safePrompts.reduce((sum, p) => sum + ((p?.likes?.length) || 0), 0);
 const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0);
 
-  // // Calculate prompt stats
-  // const totalViews = prompts?.reduce((sum, p) => sum + (p?.views || 0), 0);
-  // const totalLikes = prompts?.reduce((sum, p) => sum + (p?.likes?.length || 0), 0);
-  // const totalUsage = prompts?.reduce((sum, p) => sum + (p?.usageCount || 0), 0);
+  
 
   const updateMutation = useMutation(updateProfile, {
     onSuccess: (data) => {
@@ -69,16 +66,16 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-        <p className="text-gray-600">Manage your account information and preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 prompt-bar">Profile Settings</h1>
+        <p className="text-gray-600 prompt-bar">Manage your account information and preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Info */}
-        <div className="lg:col-span-2">
-          <div className="card">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
+        <div className="lg:col-span-2 ">
+          <div className="pro-card">
+            <div className="flex items-center justify-between mb-6 ">
+              <h2 className="text-xl font-semibold text-gray-900 prompt-bar">Profile Information</h2>
               {!isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
@@ -93,12 +90,12 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
             {isEditing ? (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
                     Username
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FiUser className="h-5 w-5 text-gray-400" />
+                      <FiUser className="h-5 w-5 text-gray-400 prompt-bar" />
                     </div>
                     <input
                       type="text"
@@ -119,7 +116,7 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
                     Email
                   </label>
                   <div className="relative">
@@ -134,11 +131,11 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
                       className="pl-10 input-field bg-gray-50"
                     />
                   </div>
-                  <p className="mt-1 text-sm text-gray-500">Email cannot be changed</p>
+                  <p className="mt-1 text-sm text-gray-500 prompt-bar">Email cannot be changed</p>
                 </div>
 
                 <div>
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
                     Bio
                   </label>
                   <textarea
@@ -187,24 +184,24 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 prompt-bar ">Username</label>
                   <div className="flex items-center space-x-2">
                     <FiUser className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{user?.username}</span>
+                    <span className="text-gray-900 prompt-bar">{user?.username}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">Email</label>
                   <div className="flex items-center space-x-2">
                     <FiMail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{user?.email}</span>
+                    <span className="text-gray-900 prompt-bar">{user?.email}</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                  <p className="text-gray-900">{user?.bio || 'No bio added yet.'}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">Bio</label>
+                  <p className="text-gray-900 prompt-bar">{user?.bio || 'No bio added yet.'}</p>
                 </div>
               </div>
             )}
@@ -213,16 +210,16 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
 
         {/* Account Stats */}
         <div className="space-y-6">
-          <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+          <div className="pro-card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 prompt-bar">Account Information</h3>
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-lg">
+                <span className="prompt-bar text-white font-medium text-lg">
                   {user?.username?.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <p className="font-medium text-gray-900">{user?.username}</p>
+                <p className="prompt-bar font-medium text-gray-900">{user?.username}</p>
                 <p className="text-sm text-gray-600">
                   Member since {new Date(user?.createdAt).toLocaleDateString()}
                 </p>
@@ -230,41 +227,26 @@ const totalUsage = safePrompts.reduce((sum, p) => sum + (p?.usageCount || 0), 0)
             </div>
           </div>
 
-          {/* Prompt Stats */}
-          {/* <div className="card">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Prompt Stats</h3>
-            <div className="space-y-2 text-sm text-gray-700">
-              {isPromptsLoading ? (
-                <p>Loading prompt stats...</p>
-              ) : (
-                <>
-                  <p>Total Prompts: {prompts.length}</p>
-                  <p>👁️ Total Views: {totalViews}</p>
-                  <p>❤️ Total Likes: {totalLikes}</p>
-                  <p>📈 Total Uses: {totalUsage}</p>
-                </>
-              )}
-            </div>
-          </div> */}
-          <div className="card">
-  <h3 className="text-lg font-semibold text-gray-900 mb-4">Prompt Stats</h3>
+
+          <div className="pro-card">
+  <h3 className="text-lg font-semibold text-gray-900 mb-4 prompt-bar">Prompt Stats</h3>
   <div className="space-y-2 text-sm text-gray-700">
     {isPromptsLoading ? (
       <p>Loading prompt stats...</p>
     ) : (
       <>
-        <p className="flex items-center gap-2">
+        <p className="flex items-center gap-2 prompt-bar">
           <FiFileText /> Total Prompts: {safePrompts.length}
 
-  {/* <FiFileText /> Total Prompts: {prompts.length} */}
+  
 </p>
-        <p className="flex items-center gap-2">
+        <p className="flex items-center gap-2 prompt-bar">
           <FiEye /> Total Views: {totalViews}
         </p>
-        <p className="flex items-center gap-2">
+        <p className="flex items-center gap-2 prompt-bar">
           <FiHeart /> Total Likes: {totalLikes}
         </p>
-        <p className="flex items-center gap-2">
+        <p className="flex items-center gap-2 prompt-bar">
           <FiBarChart2 /> Total Uses: {totalUsage}
         </p>
       </>

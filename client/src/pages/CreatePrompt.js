@@ -35,10 +35,10 @@ const CreatePrompt = () => {
 
   const content = watch('content', '');
 
-  // ✅ Fetch existing prompt if in edit mode
+ 
   const { data: existingPrompt, isLoading: isFetching } = useQuery(
     ['prompt', id],
-    () => getPrompt(id),
+    () => getPrompt(id,"edit"),
     {
       enabled: isEditMode,
       onSuccess: (data) => {
@@ -56,7 +56,10 @@ const CreatePrompt = () => {
     }
   );
 
-  // ✅ Mutations
+
+
+
+
   const createMutation = useMutation(createPrompt, {
     onSuccess: (data) => {
       queryClient.invalidateQueries(['prompts']);
@@ -125,10 +128,10 @@ const CreatePrompt = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 prompt-bar">
           {isEditMode ? 'Edit Prompt' : 'Create New Prompt'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 ">
           {isEditMode
             ? 'Update your existing prompt'
             : 'Share your AI prompt with the community'}
@@ -141,8 +144,8 @@ const CreatePrompt = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Title */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
+                Title <span style={{color:"red"}}>*</span>
               </label>
               <input
                 type="text"
@@ -159,10 +162,10 @@ const CreatePrompt = () => {
               )}
             </div>
 
-            {/* Content */}
+           
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                Prompt Content *
+              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
+                Prompt Content <span style={{color:"red"}}>*</span>
               </label>
               <textarea
                 id="content"
@@ -175,16 +178,16 @@ const CreatePrompt = () => {
                 placeholder="Enter your AI prompt"
               />
               {errors.content && (
-                <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
+                <p className="mt-1 text-sm text-red-600 prompt-bar">{errors.content.message}</p>
               )}
-              <div className="mt-1 text-sm text-gray-500">
+              <div className="mt-1 text-sm text-gray-500 ">
                 {content.length}/5000 characters
               </div>
             </div>
 
-            {/* Description */}
+          
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
                 Description (Optional)
               </label>
               <textarea
@@ -204,7 +207,7 @@ const CreatePrompt = () => {
           <div className="space-y-6">
             {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">
                 Category
               </label>
               <select
@@ -221,9 +224,8 @@ const CreatePrompt = () => {
               </select>
             </div>
 
-            {/* Tags */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tags (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">Tags (Optional)</label>
               <div className="flex">
                 <input
                   type="text"
@@ -259,25 +261,24 @@ const CreatePrompt = () => {
               <p className="text-xs text-gray-500">{tags.length}/10 tags • Press Enter to add</p>
             </div>
 
-            {/* Visibility */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2 prompt-bar">Visibility</label>
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center prompt-bar">
                   <input
                     type="radio"
                     checked={isPublic}
                     onChange={() => setIsPublic(true)}
-                    className="mr-2"
+                    className="mr-2 "
                   />
                   Public
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center prompt-bar">
                   <input
                     type="radio"
                     checked={!isPublic}
                     onChange={() => setIsPublic(false)}
-                    className="mr-2"
+                    className="mr-2 "
                   />
                   Private
                 </label>
@@ -286,7 +287,6 @@ const CreatePrompt = () => {
           </div>
         </div>
 
-        {/* Submit Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
