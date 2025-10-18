@@ -10,7 +10,11 @@ const socketIo = require('socket.io');
 const { setSocketIO } = require('./routes/sendNotification');
 
 
-dotenv.config();
+// dotenv.config();
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+console.log("✅ Loaded JWT_SECRET:", process.env.JWT_SECRET);
+
 
 const app = express();
 const server = http.createServer(app);
